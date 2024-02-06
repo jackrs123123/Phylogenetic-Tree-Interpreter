@@ -1,0 +1,134 @@
+"""
+CS/BIOS 112 - Project 03: the phylogenetic Tree of Life
+
+File: project_03.py
+
+Program returns information about phylogentic trees in terms of ancestors of taxa, common ancestors, roots, and offsprings.
+   
+
+@author:    Joaquin RS
+UIC NetID:  jrami86
+Due Date:   11/28/23
+"""
+
+def build_dict(fileName):
+    '''Builds and returns dictionary from inputted CSV file.'''
+    import csv
+    dictionary = {}
+    with open(fileName, 'r') as dictionary_info:
+        reader = list(csv.reader(dictionary_info))
+        for row in reader:
+            dictionary[row[0]] = row[1] # dictionary has child:parent relationship for keys and values
+        return dictionary
+
+
+
+def list_ancestors(taxon, tree):
+    '''Returns all ancestors in reverse-chronological order from a specified taxon.'''
+    ancestor_list = [taxon]
+    cur_taxon = taxon
+    while cur_taxon in tree: # dictionary is built with child:parent relationship
+        ancestor_list.append(tree[cur_taxon])
+        cur_taxon = tree[cur_taxon]
+    return ancestor_list
+
+
+
+def root(tree):
+    '''Returns the root of every phylogenetic tree.'''
+    values = list(tree.values())
+    for pos in values:
+        if pos not in tree: # very similar logic as ancestor_list
+            return pos
+
+
+
+def kids(taxon, tree):
+    '''Returns list of all immediate offsprings of specified taxa.'''
+    offsprings = []
+    values = list(tree.values())
+    keys = list(tree.keys())
+    if taxon in values:
+        for pos in range(values.count(taxon)):
+            position = values.index(taxon) # accesses position of key
+            offsprings.append(keys[position])
+        return offsprings
+    else:
+        return []
+
+
+
+def common_ancestor(taxon_names, tree):
+    '''Returns taxa that's the closest ancestor to all the taxon in the list.'''
+    ancestor_list = []
+    for pos in range(len(taxon_names)):
+        ancestor_list.append(list_ancestors(taxon_names[pos], tree))
+    
+    com = None
+    count = 0
+    for taxon in ancestor_list[0]: # first list of ancestors must have a string that's in all the other lists.
+        for List in ancestor_list:
+            if taxon in List:
+                count += 1 # if member of first completes a count for length of ancestor_list, it's com.
+        if count == len(ancestor_list):
+            com = taxon
+            break
+        else:
+            count = 0
+    return com
+
+
+
+def c_ancestor(taxon_names, tree):
+    '''Has same function as common_ancestor but accommodates abbreviated key names for species.'''
+    new_dict = tree
+    index = 0
+    for pos in list(new_dict.keys()): # new dict is just tree dict
+        if ' ' in pos:
+            new_key = ''
+            index = pos.index(' ')
+            new_key += pos[0] + '.' + pos[index::]
+            new_dict[new_key] = new_dict[pos]
+
+    ancestor_list = []
+    for pos in range(len(taxon_names)):
+        ancestor_list.append(list_ancestors(taxon_names[pos], new_dict))
+    
+    com = None # same exact logic as common_ancestor
+    count = 0
+    for taxon in ancestor_list[0]: # first list of ancestors must have a string that's in all the other lists.
+        for List in ancestor_list:
+            if taxon in List:
+                count += 1 # if member of first completes a count for length of ancestor_list, it's com.
+        if count == len(ancestor_list):
+            com = taxon
+            break
+        else:
+            count = 0
+    return com
+            
+
+
+"""
+# examples from project write-up
+list_ancestors(’Pan troglodytes’, tax_dict)
+#Out[1]: [’Pan troglodytes’, ’Hominoidea’, ’Simiiformes’, ’Haplorrhini’, ’Primates’]
+
+common_ancestor([’Hominoidea’, ’Pan troglodytes’], tax_dict)
+#Out[2]: ’Hominoidea’
+
+common_ancestor([’Hominoidea’, ’Pan troglodytes’, ’Lorisiformes’], tax_dict)
+#Out[3]: ’Primates’
+
+common_ancestor([’Hominoidea’, ’Pongo abelii’], tax_dict)
+#Out[4]: ’Hominoidea’
+
+#c_ancestor([’Hominoidea’, ’P. abelii’], tax_dict)
+#Out[5]: ’Hominoidea’
+
+root(tax_dict)
+#Out[6]: ’Primates’
+
+kids(’Primates’, tax_dict)
+#Out[7]: [’Haplorrhini’, ’Strepsirrhini’]
+"""
